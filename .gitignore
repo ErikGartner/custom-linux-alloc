@@ -8,8 +8,6 @@
 *.obj
 *.elf
 
-
-
 # Precompiled Headers
 *.gch
 *.pch
@@ -78,3 +76,6 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
+
+# Weird files
+*.Po
