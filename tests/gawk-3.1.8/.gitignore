@@ -9,4 +9,3 @@ awklib/group.awk
 awklib/passwd.awk
 *.log
 Makefile
-/*/Makefile
