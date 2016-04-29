@@ -35,12 +35,12 @@ INSTALL_DATA = ${INSTALL} -m 644
 # We use $(mkdir_p).
 # In automake <= 1.9.x, $(mkdir_p) is defined either as "mkdir -p --" or as
 # "$(mkinstalldirs)" or as "$(install_sh) -d". For these automake versions,
-# ${SHELL} /Users/erik/Dropbox/Universitetet/edaf35/os_alloc/gawk-3.1.8/install-sh does not start with $(SHELL), so we add it.
+# ${SHELL} /Users/erik/Dropbox/Universitetet/edaf35/os_alloc/tests/gawk-3.1.8/install-sh does not start with $(SHELL), so we add it.
 # In automake >= 1.10, $(top_builddir)/./install-sh -c -d is derived from ${MKDIR_P}, which is defined
 # either as "/path/to/mkdir -p" or ".../install-sh -c -d". For these automake
 # versions, $(mkinstalldirs) and $(install_sh) are unused.
-mkinstalldirs = $(SHELL) ${SHELL} /Users/erik/Dropbox/Universitetet/edaf35/os_alloc/gawk-3.1.8/install-sh -d
-install_sh = $(SHELL) ${SHELL} /Users/erik/Dropbox/Universitetet/edaf35/os_alloc/gawk-3.1.8/install-sh
+mkinstalldirs = $(SHELL) ${SHELL} /Users/erik/Dropbox/Universitetet/edaf35/os_alloc/tests/gawk-3.1.8/install-sh -d
+install_sh = $(SHELL) ${SHELL} /Users/erik/Dropbox/Universitetet/edaf35/os_alloc/tests/gawk-3.1.8/install-sh
 MKDIR_P = .././install-sh -c -d
 mkdir_p = $(top_builddir)/./install-sh -c -d
 

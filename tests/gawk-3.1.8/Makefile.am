@@ -110,6 +110,7 @@ base_sources = \
 	regex.h \
 	replace.c \
 	version.c \
+	custom_alloc.c \
 	xalloc.h
 
 gawk_SOURCES = $(base_sources) eval.c profile.c

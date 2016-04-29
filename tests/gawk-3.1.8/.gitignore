@@ -7,3 +7,6 @@ test/fmtspcl.ok
 gawk
 awklib/group.awk
 awklib/passwd.awk
+*.log
+Makefile
+/*/Makefile

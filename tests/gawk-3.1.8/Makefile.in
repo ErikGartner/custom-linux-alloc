@@ -90,7 +90,7 @@ am__objects_1 = array.$(OBJEXT) awkgram.$(OBJEXT) builtin.$(OBJEXT) \
 	floatcomp.$(OBJEXT) gawkmisc.$(OBJEXT) getopt.$(OBJEXT) \
 	getopt1.$(OBJEXT) io.$(OBJEXT) main.$(OBJEXT) msg.$(OBJEXT) \
 	node.$(OBJEXT) random.$(OBJEXT) re.$(OBJEXT) regex.$(OBJEXT) \
-	replace.$(OBJEXT) version.$(OBJEXT)
+	replace.$(OBJEXT) version.$(OBJEXT) custom_alloc.$(OBJEXT)
 am_gawk_OBJECTS = $(am__objects_1) eval.$(OBJEXT) profile.$(OBJEXT)
 gawk_OBJECTS = $(am_gawk_OBJECTS)
 gawk_LDADD = $(LDADD)
@@ -376,6 +376,7 @@ base_sources = \
 	regex.h \
 	replace.c \
 	version.c \
+	custom_alloc.c \
 	xalloc.h
 
 gawk_SOURCES = $(base_sources) eval.c profile.c
@@ -442,7 +443,7 @@ config.h: stamp-h1
 stamp-h1: $(srcdir)/configh.in $(top_builddir)/config.status
 	@rm -f stamp-h1
 	cd $(top_builddir) && $(SHELL) ./config.status config.h
-$(srcdir)/configh.in:  $(am__configure_deps) 
+$(srcdir)/configh.in:  $(am__configure_deps)
 	($(am__cd) $(top_srcdir) && $(AUTOHEADER))
 	rm -f stamp-h1
 	touch $@
@@ -486,10 +487,10 @@ uninstall-binPROGRAMS:
 
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
-gawk$(EXEEXT): $(gawk_OBJECTS) $(gawk_DEPENDENCIES) 
+gawk$(EXEEXT): $(gawk_OBJECTS) $(gawk_DEPENDENCIES)
 	@rm -f gawk$(EXEEXT)
 	$(LINK) $(gawk_OBJECTS) $(gawk_LDADD) $(LIBS)
-pgawk$(EXEEXT): $(pgawk_OBJECTS) $(pgawk_DEPENDENCIES) 
+pgawk$(EXEEXT): $(pgawk_OBJECTS) $(pgawk_DEPENDENCIES)
 	@rm -f pgawk$(EXEEXT)
 	$(LINK) $(pgawk_OBJECTS) $(pgawk_LDADD) $(LIBS)
 
