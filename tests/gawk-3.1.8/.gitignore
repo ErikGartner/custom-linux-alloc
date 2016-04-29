@@ -1,2 +1,9 @@
 custom_alloc.c
+awklib/grcat
+awklib/igawk
+awklib/pwcat
+pgawk
+test/fmtspcl.ok
 gawk
+awklib/group.awk
+awklib/passwd.awk
