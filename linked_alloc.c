@@ -5,12 +5,9 @@
 #include <stdio.h>
 #include <stddef.h>
 
-#define DEBUG
-#ifdef DEBUG
-# define DEBUG_PRINT(x) fprintf x
-#else
-# define DEBUG_PRINT(x) do {} while (0)
-#endif
+#define DEBUG 0
+#define debug_print(...) \
+            do { if (DEBUG) fprintf(stderr, ##__VA_ARGS__); } while (0)
 
 #define ALIGNMENT 8
 #define ALIGN(size) (((size) + (ALIGNMENT-1)) & ~(ALIGNMENT-1))
@@ -30,7 +27,7 @@ static list_t* base = NULL;
 
 void *malloc(size_t size)
 {
-	DEBUG_PRINT((stderr, "*******************MY MALLOC(%zu)\n", size));
+	debug_print("*******************MY MALLOC(%zu)\n", size);
 
 
 	if (size <= 0) {
@@ -91,7 +88,7 @@ list_t* find_block(list_t** last, size_t size)
 
 
 void free(void *ptr) {
-	DEBUG_PRINT((stderr, "***************************Free\n"));
+	debug_print("***************************Free\n");
 	if (ptr == NULL)
 		return;
 	list_t* block = ((list_t*) ptr) - 1;
@@ -99,7 +96,7 @@ void free(void *ptr) {
 }
 
 void *calloc(size_t nbr_elements, size_t element_size) {
-	//DEBUG_PRINT((stderr, "***************************CALLOC(%zu, %zu)\n", nbr_elements, element_size));
+	//debug_print((stderr, "***************************CALLOC(%zu, %zu)\n", nbr_elements, element_size));
 
 	size_t size = nbr_elements * element_size;
 	void* ptr = malloc(size);
@@ -110,7 +107,7 @@ void *calloc(size_t nbr_elements, size_t element_size) {
 }
 
 void *realloc(void *ptr, size_t size) {
-	DEBUG_PRINT((stderr, "***************************REALLOC\n"));
+	debug_print("***************************REALLOC\n");
 
 	if (!ptr) {
 		return malloc(size);
