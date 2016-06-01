@@ -5,6 +5,16 @@
 #include <stdio.h>
 #include <stddef.h>
 
+#define DEBUG
+#ifdef DEBUG
+# define DEBUG_PRINT(x) fprintf x
+#else
+# define DEBUG_PRINT(x) do {} while (0)
+#endif
+
+#define ALIGNMENT 8
+#define ALIGN(size) (((size) + (ALIGNMENT-1)) & ~(ALIGNMENT-1))
+
 
 typedef struct list_t list_t;
 struct list_t {
@@ -13,17 +23,19 @@ struct list_t {
 	list_t* next;												 /* next available block. */
 };
 
+#define META_SIZE (ALIGN(sizeof(list_t)))
 list_t* allocate_space(list_t*, size_t);
 list_t* find_block(list_t**, size_t);
 static list_t* base = NULL;
 
 void *malloc(size_t size)
 {
+	DEBUG_PRINT((stderr, "*******************MY MALLOC(%zu)\n", size));
+
+
 	if (size <= 0) {
 		return NULL;
 	}
-
-	size_t real_size = size + sizeof(list_t);
 
 	list_t* last = base;
 	list_t* r = find_block(&last, size);
@@ -47,7 +59,7 @@ list_t* allocate_space(list_t* last, size_t size)
 {
 
 	list_t* meta = sbrk(0);
-	void* data = sbrk(size + sizeof(list_t));
+	void* data = sbrk(ALIGN(size + META_SIZE));
 	if (data == (void*) - 1) {
 		return NULL;
 	}
@@ -79,18 +91,26 @@ list_t* find_block(list_t** last, size_t size)
 
 
 void free(void *ptr) {
+	DEBUG_PRINT((stderr, "***************************Free\n"));
+	if (ptr == NULL)
+		return;
 	list_t* block = ((list_t*) ptr) - 1;
 	block->in_use = 0;
 }
 
 void *calloc(size_t nbr_elements, size_t element_size) {
+	//DEBUG_PRINT((stderr, "***************************CALLOC(%zu, %zu)\n", nbr_elements, element_size));
+
 	size_t size = nbr_elements * element_size;
 	void* ptr = malloc(size);
+	if (ptr == NULL)
+		return NULL;
 	memset(ptr, 0, size);
 	return ptr;
 }
 
 void *realloc(void *ptr, size_t size) {
+	DEBUG_PRINT((stderr, "***************************REALLOC\n"));
 
 	if (!ptr) {
 		return malloc(size);
