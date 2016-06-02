@@ -1,7 +1,7 @@
 # Heap Managers - OS project
 
 ## Running
-1. `cd ./tests/gawk-3.1.8` and `configure` on Linux or `./configure` on Mac.
+1. `cd ./tests/gawk-3.1.8` and `./configure`.
 2. `cd ../../` to root folder and run one of `make linked_gawk` or `make buddy_gawk` or `make minitest` to test.
 
 ## Description
@@ -15,10 +15,10 @@
 8. Repeat for your other malloc implementation.
 
 ### Linked list
-This rather naïve implementation resides in [heap_linked.c](./heap_linked.c).
+This rather naïve implementation resides in [linked_alloc.c](./linked_alloc.c).
 
 ### Buddy allocator
-The implementation resides in [heap_buddy.c](./heap_buddy.c).
+The implementation resides in [buddy_alloc.c](./buddy_alloc.c).
 
 ### Useful links
 * [A Memory Allocator by Doug Lea](http://g.oswego.edu/dl/html/malloc.html)
