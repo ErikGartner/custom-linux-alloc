@@ -23,7 +23,7 @@ struct list_t {
 #define META_SIZE (ALIGN(sizeof(list_t)))
 list_t* allocate_space(list_t*, size_t);
 list_t* find_block(list_t**, size_t);
-static list_t* base = NULL;
+list_t* base = NULL;
 
 void *malloc(size_t size)
 {
@@ -89,9 +89,10 @@ list_t* find_block(list_t** last, size_t size)
 
 void free(void *ptr) {
 	debug_print("***************************Free\n");
-	if (ptr == NULL)
+	if (!ptr)
 		return;
 	list_t* block = ((list_t*) ptr) - 1;
+	assert(block->in_use == 1);
 	block->in_use = 0;
 }
 
@@ -114,7 +115,7 @@ void *realloc(void *ptr, size_t size) {
 	}
 
 	list_t* block = ((list_t*) ptr) - 1;
-	if (block->size == size) {
+	if (block->size >= size) {
 		return ptr;
 	}
 
