@@ -12,17 +12,16 @@
 #define ALIGNMENT 8
 #define ALIGN(size) (((size) + (ALIGNMENT-1)) & ~(ALIGNMENT-1))
 
-
 typedef struct list_t list_t;
 struct list_t {
-	size_t size;
-	int in_use;												/* if the block is used or not */
-	list_t* next;												 /* next available block. */
+	size_t 		size;
+	unsigned 	in_use:1;	/* if the block is used or not */
+	list_t* 	next;		/* next available block. */
 };
 
 #define META_SIZE (ALIGN(sizeof(list_t)))
-list_t* allocate_space(list_t*, size_t);
-list_t* find_block(list_t**, size_t);
+static list_t* allocate_space(list_t*, size_t);
+static list_t* find_block(list_t**, size_t);
 list_t* base = NULL;
 
 void *malloc(size_t size)
@@ -52,7 +51,7 @@ void *malloc(size_t size)
 
 }
 
-list_t* allocate_space(list_t* last, size_t size)
+static list_t* allocate_space(list_t* last, size_t size)
 {
 
 	list_t* meta = sbrk(0);
@@ -71,7 +70,7 @@ list_t* allocate_space(list_t* last, size_t size)
 	return meta;
 }
 
-list_t* find_block(list_t** last, size_t size)
+static list_t* find_block(list_t** last, size_t size)
 {
 
 	list_t* current = base;
