@@ -10,5 +10,5 @@ linked_gawk:
 
 mini_test:
 	rm -f ./test
-	gcc -g -o ./test.out tests/mini_test.c linked_alloc.c
+	gcc -g -o ./test.out tests/mini_test.c buddy_alloc.c
 	./test.out
