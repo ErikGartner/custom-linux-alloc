@@ -34,6 +34,27 @@ static list_t* split(list_t*, size_t);
 static list_t* freelist[K_MAX + 1];
 static void* start = NULL;
 
+
+static void print_freelist()
+{
+        debug_print("Freelist: [");
+        for(int i = ORDER_0; i <= K_MAX; i++) {
+                int f = 0;
+                int j = 0;
+                list_t* current = freelist[i];
+                while(current) {
+                        if(!current->in_use){
+                                f++;
+                        }
+                        j++;
+
+                        current = current->succ;
+                }
+                debug_print("%d/%d, ", f, j);
+        }
+        debug_print("]\n");
+}
+
 void *malloc(size_t requested_size)
 {
 	debug_print("*******************MY MALLOC(%zu)\n", requested_size);
@@ -61,8 +82,10 @@ void *malloc(size_t requested_size)
 
 	if (r) {
 		r->in_use = 1;
+                print_freelist();
+                debug_print("****** Malloc returned %p\n", (r+1));
 		return (r + 1);
-	} else {
+	}else{
 		return NULL;
 	}
 }
@@ -71,9 +94,9 @@ void *malloc(size_t requested_size)
 static size_t get_order(size_t v)
 {
 
-	int k = ORDER_0;
-	while (1 << k < v)
-		k++;
+    int k = ORDER_0;
+    while (1 << k < v)
+	k++;
 	return k;
 }
 
@@ -87,7 +110,7 @@ static list_t* find_block(size_t k)
 
 
 	list_t* current = freelist[k];
-	debug_print("current: (%p), k=%zu\n", current, k);
+        debug_print("current: (%zu), k=%zu\n", (size_t)current, k);
 
 	while (current) {
 
@@ -111,12 +134,12 @@ static list_t* split(list_t* src, size_t new_order)
 	while (src->order > new_order) {
 
 		/* src becomes left buddy */
-		if (freelist[src->order] == src)
-			freelist[src->order] = src->succ;
+                if (freelist[src->order] == src)
+                        freelist[src->order] = src->succ;
 
 		src->order--;
 
-		if (src->pred)
+                if (src->pred)
 			src->pred->succ = src->succ;
 		if (src->succ)
 			src->succ->pred = src->pred;
@@ -147,46 +170,56 @@ static void merge(list_t* block)
 {
 
 	if (block->order == K_MAX)
-		return;
+	       return;
 
 	unsigned k = block->order;
 	list_t* buddy = start + (((void*)block - start) ^ (1 << k));
 
 	if (buddy->in_use)
-		return;
+	       return;
+
+        if (buddy->order != block->order)
+                return;
 
 	list_t* left = block;
 	list_t* right = buddy;
 	if (block > buddy) {
-		left = buddy;
-		right = block;
+        	left = buddy;
+        	right = block;
 	}
 
-	debug_print("BOB1\n");
+        debug_print("BOB1\n");
 
 	left->order++;
+	// Länka ur left ur freelist från höger
 	if (left->pred)
-		left->pred->succ = right->succ;
+	       left->pred->succ = left->succ;
+	// Länka ur left ur freelist från vänster
+	if(left->succ)
+		left->succ->pred = left->pred;
 
-	if (right->succ)
-		right->succ->pred = left->pred;
+	if (right->pred)
+	       right->pred->succ = right->succ;
+
+	if(right->succ)
+		right->succ->pred = right->pred;
 
 	if (freelist[right->order] == left)
-		freelist[right->order] = right->succ;
-	if (freelist[right->order] == right)
-		freelist[right->order] = right->succ;
+	       freelist[right->order] = right->succ;
+       if (freelist[right->order] == right)
+       	       freelist[right->order] = right->succ;
 
-	left->succ = freelist[left->order];
-	if (freelist[left->order])
-		freelist[left->order]->pred = left;
-	freelist[left->order] = left;
+        left->succ = freelist[left->order];
+        if (freelist[left->order])
+                freelist[left->order]->pred = left;
+        freelist[left->order] = left;
 
 	merge(left);
 }
 
 
 void free(void *ptr) {
-	debug_print("***************************Free\n");
+	debug_print("***************************Free (%p)\n", ptr);
 	if (!ptr)
 		return;
 
