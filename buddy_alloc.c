@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stddef.h>
 
-#define DEBUG 1
+#define DEBUG 0
 #define debug_print(...) \
 	    do { if (DEBUG) fprintf(stderr, ##__VA_ARGS__); } while (0)
 
@@ -34,9 +34,31 @@ static list_t* split(list_t*, size_t);
 static list_t* freelist[K_MAX + 1];
 static void* start = NULL;
 
+
+static void print_freelist() 
+{
+        debug_print("Freelist: [");
+        for(int i = ORDER_0; i <= K_MAX; i++) {
+                int f = 0;
+                int j = 0;
+                list_t* current = freelist[i];
+                while(current) {
+                        if(!current->in_use){
+                                f++;
+                        }
+                        j++;
+
+                        current = current->succ;
+                }
+                debug_print("%d/%d, ", f, j);
+        }
+        debug_print("]\n");
+}
+
 void *malloc(size_t requested_size)
 {
 	debug_print("*******************MY MALLOC(%zu)\n", requested_size);
+        print_freelist();
 
 	if (requested_size <= 0) {
 		return NULL;
@@ -61,6 +83,8 @@ void *malloc(size_t requested_size)
 
 	if (r) {
 		r->in_use = 1;
+                print_freelist();
+                debug_print("****** Malloc returned %p\n", (r+1));
 		return (r + 1);
 	}else{
 		return NULL;
@@ -87,7 +111,6 @@ static list_t* find_block(size_t k)
 
 
 	list_t* current = freelist[k];
-        debug_print("current: (%p), k=%d\n", current, k);
 
 	while (current) {
 
@@ -155,6 +178,9 @@ static void merge(list_t* block)
 	if (buddy->in_use)
 	       return;
 
+        if (buddy->order != block->order)
+                return;
+
 	list_t* left = block;
 	list_t* right = buddy;
 	if (block > buddy) {
@@ -162,14 +188,19 @@ static void merge(list_t* block)
         	right = block;
 	}
 
-        debug_print("BOB1\n");
-
 	left->order++;
+	// Länka ur left ur freelist från höger
 	if (left->pred)
-	       left->pred->succ = right->succ;
+	       left->pred->succ = left->succ;
+	// Länka ur left ur freelist från vänster
+	if(left->succ)
+		left->succ->pred = left->pred;
 
-	if (right->succ)
-	       right->succ->pred = left->pred;
+	if (right->pred)
+	       right->pred->succ = right->succ;
+
+	if(right->succ)
+		right->succ->pred = right->pred;
 
 	if (freelist[right->order] == left)
 	       freelist[right->order] = right->succ;
@@ -186,13 +217,16 @@ static void merge(list_t* block)
 
 
 void free(void *ptr) {
-	debug_print("***************************Free\n");
+	debug_print("***************************Free (%p)\n", ptr);
+        print_freelist();
 	if (!ptr)
 		return;
 
 	list_t* block = ((list_t*)ptr - 1);
 	block->in_use = 0;
 	merge(block);
+        debug_print("***************************Free -- exit (%p)\n", ptr);
+        print_freelist();
 }
 
 void *calloc(size_t nbr_elements, size_t element_size) {
