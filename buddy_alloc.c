@@ -22,7 +22,7 @@ struct list_t {
 
 #define K_MAX 22
 #define K_MAX_SIZE (1 << K_MAX)
-#define ORDER_0 8
+#define ORDER_0 4
 // Size of the node metadata
 #define META_SIZE (ALIGN(sizeof(list_t)))
 
@@ -87,6 +87,7 @@ static list_t* find_block(size_t k)
 
 
 	list_t* current = freelist[k];
+        debug_print("current: (%p), k=%d\n", current, k);
 
 	while (current) {
 
@@ -110,13 +111,19 @@ static list_t* split(list_t* src, size_t new_order)
 	while (src->order > new_order) {
 
 		/* src becomes left buddy */
+                if (freelist[src->order] == src)
+                        freelist[src->order] = src->succ;
+
 		src->order--;
-		if (src->pred)
+
+                if (src->pred)
 			src->pred->succ = src->succ;
 		if (src->succ)
 			src->succ->pred = src->pred;
 		src->pred = NULL;
 		src->succ = NULL;
+
+
 
 		size_t size = 1 << src->order;
 
@@ -166,6 +173,13 @@ static void merge(list_t* block)
 
 	if (freelist[right->order] == left)
 	       freelist[right->order] = right->succ;
+       if (freelist[right->order] == right)
+       	       freelist[right->order] = right->succ;
+
+        left->succ = freelist[left->order];
+        if (freelist[left->order])
+                freelist[left->order]->pred = left;
+        freelist[left->order] = left;
 
 	merge(left);
 }
