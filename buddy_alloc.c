@@ -7,7 +7,7 @@
 
 #define DEBUG 1
 #define debug_print(...) \
-            do { if (DEBUG) fprintf(stderr, ##__VA_ARGS__); } while (0)
+	    do { if (DEBUG) fprintf(stderr, ##__VA_ARGS__); } while (0)
 
 #define ALIGNMENT 8
 #define ALIGN(size) (((size) + (ALIGNMENT-1)) & ~(ALIGNMENT-1))
@@ -16,7 +16,7 @@ typedef struct list_t list_t;
 struct list_t {
 	unsigned	in_use: 1; 	/* if the block is used or not */
 	size_t		order; 		/* current order of block (2^order) */
-	list_t*	    	succ;		/* right child block in tree */
+	list_t*	    succ;		/* right child block in tree */
 	list_t*		pred;		/* left child block in tree */
 };
 
@@ -45,8 +45,6 @@ void *malloc(size_t requested_size)
 	if (!start) {
 		// First allocation ever, grab memory and root the tree
 		start = sbrk(K_MAX_SIZE);
-                assert(start != -1);
-
 		list_t* top = start;
 		top->order = K_MAX;
 		top->in_use = 0;
@@ -56,33 +54,26 @@ void *malloc(size_t requested_size)
 	}
 
 	/* E.g. if requested size is 56 bytes, k = 6 (2^6=64)*/
-	size_t k = get_order(requested_size + META_SIZE);
-        debug_print("Order: %d\n", k);
+	size_t k = get_order(ALIGN(requested_size + META_SIZE));
+	debug_print("Order: %zu\n", k);
 
 	list_t* r = find_block(k);
 
 	if (r) {
-                r->in_use = 1;
-                return (r + 1);
-        }else{
-                return NULL;
-        }
+		r->in_use = 1;
+		return (r + 1);
+	}else{
+		return NULL;
+	}
 }
 
 /* Find the smallest power of 2 larger than k */
 static size_t get_order(size_t v)
 {
-	/* http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2 */
-	// v--;
-	// v |= v >> 1;
-	// v |= v >> 2;
-	// v |= v >> 4;
-	// v |= v >> 8;
-	// v |= v >> 16;
-	// v++;
-        int k = ORDER_0;
-        while (1 << k < v)
-                k++;
+
+    int k = ORDER_0;
+    while (1 << k < v)
+	k++;
 	return k;
 }
 
@@ -118,23 +109,23 @@ static list_t* split(list_t* src, size_t new_order)
 
 	while (src->order > new_order) {
 
-                /* src becomes left buddy */
-                src->order--;
-                if (src->pred)
-                        src->pred->succ = src->succ;
-                if (src->succ)
-                        src->succ->pred = src->pred;
+		/* src becomes left buddy */
+		src->order--;
+		if (src->pred)
+			src->pred->succ = src->succ;
+		if (src->succ)
+			src->succ->pred = src->pred;
 		src->pred = NULL;
 		src->succ = NULL;
 
-                size_t size = 1 << src->order;
+		size_t size = 1 << src->order;
 
 		list_t* right = ((void*) src + size);
 		right->order = src->order;
 		right->in_use = 0;
 		right->pred = src;
 		right->succ = freelist[src->order];
-                src->succ = right;
+		src->succ = right;
 
 		if (freelist[src->order])
 			freelist[src->order]->pred = right;
@@ -145,9 +136,38 @@ static list_t* split(list_t* src, size_t new_order)
 	return src;
 }
 
-static void merge(size_t k)
+static void merge(list_t* block)
 {
-	return;
+
+	if (block->order == K_MAX)
+	       return;
+
+	unsigned k = block->order;
+	list_t* buddy = start + (((void*)block - start) ^ (1 << k));
+
+	if (buddy->in_use)
+	       return;
+
+	list_t* left = block;
+	list_t* right = buddy;
+	if (block > buddy) {
+        	left = buddy;
+        	right = block;
+	}
+
+        debug_print("BOB1\n");
+
+	left->order++;
+	if (left->pred)
+	       left->pred->succ = right->succ;
+
+	if (right->succ)
+	       right->succ->pred = left->pred;
+
+	if (freelist[right->order] == left)
+	       freelist[right->order] = right->succ;
+
+	merge(left);
 }
 
 
@@ -155,11 +175,14 @@ void free(void *ptr) {
 	debug_print("***************************Free\n");
 	if (!ptr)
 		return;
-	return;
+
+	list_t* block = ((list_t*)ptr - 1);
+	block->in_use = 0;
+	merge(block);
 }
 
 void *calloc(size_t nbr_elements, size_t element_size) {
-	debug_print((stderr, "***************************CALLOC(%zu, %zu)\n", nbr_elements, element_size));
+	debug_print( "***************************CALLOC(%zu, %zu)\n", nbr_elements, element_size);
 
 	size_t size = nbr_elements * element_size;
 	void* ptr = malloc(size);
