@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stddef.h>
 
-#define DEBUG 0
+#define DEBUG 1
 #define debug_print(...) \
 	    do { if (DEBUG) fprintf(stderr, ##__VA_ARGS__); } while (0)
 
@@ -33,7 +33,6 @@ static list_t* split(list_t*, size_t);
 /* Array of pointers to first block of order k at free_list[k] */
 static list_t* freelist[K_MAX + 1];
 static void* start = NULL;
-
 
 static void print_freelist() 
 {
@@ -219,6 +218,7 @@ static void merge(list_t* block)
 void free(void *ptr) {
 	debug_print("***************************Free (%p)\n", ptr);
         print_freelist();
+        
 	if (!ptr)
 		return;
 
