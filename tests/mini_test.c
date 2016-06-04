@@ -67,7 +67,7 @@ int main()
 	str = (char *) xmalloc(640);
 
 	char *str2 = (char *) xmalloc(15);
-	str2 = (char *) xrealloc(str, 15);
+	char *str3 = (char *) xrealloc(str2, 150);
 	str2 = (char *) xcalloc(1, 15);
 
 	return (0);

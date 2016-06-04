@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stddef.h>
 
-#define DEBUG 1
+#define DEBUG 0
 #define debug_print(...) \
 	    do { if (DEBUG) fprintf(stderr, ##__VA_ARGS__); } while (0)
 
@@ -14,7 +14,7 @@
 
 typedef struct list_t list_t;
 struct list_t {
-	unsigned	in_use: 1; 	/* if the block is used or not */
+	unsigned	in_use:1; 	/* if the block is used or not */
 	size_t		order; 		/* current order of block (2^order) */
 	list_t*	    succ;		/* right child block in tree */
 	list_t*		pred;		/* left child block in tree */
@@ -75,7 +75,7 @@ void *malloc(size_t requested_size)
 	}
 
 	/* E.g. if requested size is 56 bytes, k = 6 (2^6=64)*/
-	size_t k = get_order(ALIGN(requested_size + META_SIZE));
+	size_t k = get_order(requested_size + META_SIZE);
 	debug_print("Order: %zu\n", k);
 
 	list_t* r = find_block(k);
@@ -95,9 +95,10 @@ static size_t get_order(size_t v)
 {
 
     int k = ORDER_0;
-    while (1 << k < v)
-	k++;
-	return k;
+    while ((1 << k) < v){
+            k++;
+    }
+    return k;
 }
 
 
@@ -145,8 +146,6 @@ static list_t* split(list_t* src, size_t new_order)
 		src->pred = NULL;
 		src->succ = NULL;
 
-
-
 		size_t size = 1 << src->order;
 
 		list_t* right = ((void*) src + size);
@@ -168,11 +167,14 @@ static list_t* split(list_t* src, size_t new_order)
 static void merge(list_t* block)
 {
 
+        if(block->in_use)
+                return;
+
 	if (block->order == K_MAX)
 	       return;
 
 	unsigned k = block->order;
-	list_t* buddy = start + (((void*)block - start) ^ (1 << k));
+	list_t* buddy = start + ((((void*)block) - start) ^ (1 << k));
 
 	if (buddy->in_use)
 	       return;
@@ -201,10 +203,11 @@ static void merge(list_t* block)
 	if(right->succ)
 		right->succ->pred = right->pred;
 
+        /* Här kan det vara fel!! Är vi säkra på att vi inte hamnar tillbak i listan?*/
 	if (freelist[right->order] == left)
 	       freelist[right->order] = right->succ;
-       if (freelist[right->order] == right)
-       	       freelist[right->order] = right->succ;
+        if (freelist[right->order] == right)
+       	       freelist[right->order] = left->succ;
 
         left->succ = freelist[left->order];
         if (freelist[left->order])
@@ -218,11 +221,11 @@ static void merge(list_t* block)
 void free(void *ptr) {
 	debug_print("***************************Free (%p)\n", ptr);
         print_freelist();
-        
+
 	if (!ptr)
 		return;
 
-	list_t* block = ((list_t*)ptr - 1);
+	list_t* block = (((list_t*)ptr) - 1);
 	block->in_use = 0;
 	merge(block);
         debug_print("***************************Free -- exit (%p)\n", ptr);
@@ -241,14 +244,14 @@ void *calloc(size_t nbr_elements, size_t element_size) {
 }
 
 void *realloc(void *ptr, size_t size) {
-	debug_print("***************************REALLOC\n");
+	debug_print("***************************REALLOC(%p, %d)\n", ptr, size);
 
 	if (!ptr) {
 		return malloc(size);
 	}
 
-	list_t* block = ((list_t*) ptr) - 1;
-	if (2 << block->order >= size + META_SIZE) {
+	list_t* block = (((list_t*) ptr) - 1);
+	if ((1 << block->order) - META_SIZE >= size) {
 		return ptr;
 	}
 
@@ -257,7 +260,7 @@ void *realloc(void *ptr, size_t size) {
 		return NULL;
 	}
 
-	memcpy(new_ptr, ptr, (2 << block->order) - META_SIZE);
+	memcpy(new_ptr, ptr, (1 << block->order) - META_SIZE);
 	free(ptr);
 	return new_ptr;
 }
