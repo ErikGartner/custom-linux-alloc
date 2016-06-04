@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stddef.h>
 
-#define DEBUG 0
+#define DEBUG 1
 #define debug_print(...) \
 	    do { if (DEBUG) fprintf(stderr, ##__VA_ARGS__); } while (0)
 
@@ -75,7 +75,7 @@ void *malloc(size_t requested_size)
 	}
 
 	/* E.g. if requested size is 56 bytes, k = 6 (2^6=64)*/
-	size_t k = get_order(requested_size + META_SIZE);
+	size_t k = get_order(ALIGN(requested_size + META_SIZE));
 	debug_print("Order: %zu\n", k);
 
 	list_t* r = find_block(k);
@@ -226,6 +226,7 @@ void free(void *ptr) {
 		return;
 
 	list_t* block = (((list_t*)ptr) - 1);
+        assert(block->in_use);
 	block->in_use = 0;
 	merge(block);
         debug_print("***************************Free -- exit (%p)\n", ptr);
