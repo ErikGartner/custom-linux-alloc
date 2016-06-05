@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stddef.h>
 
-#define DEBUG 1
+#define DEBUG 0
 #define debug_print(...) \
 	    do { if (DEBUG) fprintf(stderr, ##__VA_ARGS__); } while (0)
 
@@ -46,9 +46,10 @@ static void print_freelist() 
                                 f++;
                         }
                         j++;
-
+                        debug_print("%p -> ", current);
                         current = current->succ;
                 }
+
                 debug_print("%d/%d, ", f, j);
         }
         debug_print("]\n");
@@ -128,36 +129,59 @@ static list_t* find_block(size_t k)
 	return current;
 }
 
+static void remove_from_freelist(list_t* item) {
+	size_t k = item->order;
+
+	if (freelist[k] == item)
+		freelist[k] = item->succ;
+
+	if (item->pred)
+		item->pred->succ = item->succ;
+
+	if (item->succ)
+		item->succ->pred = item->pred;
+
+	item->pred = NULL;
+	item->succ = NULL;
+
+}
+
+static void add_to_freelist(list_t* item) {
+
+	size_t k = item->order;
+
+	if (!freelist[k]) {
+		freelist[k] = item;
+		item->succ = NULL;
+		item->pred = NULL;
+		return;
+	}
+
+	item->pred = NULL;
+	item->succ = freelist[k];
+	freelist[k]->pred = item;
+	freelist[k] = item;
+}
+
 static list_t* split(list_t* src, size_t new_order)
 {
 
 	while (src->order > new_order) {
 
 		/* src becomes left buddy */
-                if (freelist[src->order] == src)
-                        freelist[src->order] = src->succ;
+       remove_from_freelist(src);
 
-		src->order--;
-
-                if (src->pred)
-			src->pred->succ = src->succ;
-		if (src->succ)
-			src->succ->pred = src->pred;
-		src->pred = NULL;
-		src->succ = NULL;
-
+		// set new order
+		src->order = src->order - 1;
+		// calculate half size of old block, aka size of new order.
 		size_t size = 1 << src->order;
 
-		list_t* right = ((void*) src + size);
+		list_t* right = ((void*) src) + size;
 		right->order = src->order;
 		right->in_use = 0;
-		right->pred = src;
-		right->succ = freelist[src->order];
-		src->succ = right;
 
-		if (freelist[src->order])
-			freelist[src->order]->pred = right;
-		freelist[src->order] = src;
+		add_to_freelist(right);
+		add_to_freelist(src);
 
 	}
 
@@ -167,20 +191,13 @@ static list_t* split(list_t* src, size_t new_order)
 static void merge(list_t* block)
 {
 
-        if(block->in_use)
-                return;
+    if (block->in_use || block->order == K_MAX)
+            return;
 
-	if (block->order == K_MAX)
+	list_t* buddy = start + ((((void*)block) - start) ^ (1 << block->order));
+
+	if (buddy->in_use || buddy->order != block->order)
 	       return;
-
-	unsigned k = block->order;
-	list_t* buddy = start + ((((void*)block) - start) ^ (1 << k));
-
-	if (buddy->in_use)
-	       return;
-
-        if (buddy->order != block->order)
-                return;
 
 	list_t* left = block;
 	list_t* right = buddy;
@@ -189,31 +206,10 @@ static void merge(list_t* block)
         	right = block;
 	}
 
+	remove_from_freelist(right);
+	remove_from_freelist(left);
 	left->order++;
-	// Länka ur left ur freelist från höger
-	if (left->pred)
-	       left->pred->succ = left->succ;
-	// Länka ur left ur freelist från vänster
-	if(left->succ)
-		left->succ->pred = left->pred;
-
-	if (right->pred)
-	       right->pred->succ = right->succ;
-
-	if(right->succ)
-		right->succ->pred = right->pred;
-
-        /* Här kan det vara fel!! Är vi säkra på att vi inte hamnar tillbak i listan?*/
-	if (freelist[right->order] == left)
-	       freelist[right->order] = right->succ;
-        if (freelist[right->order] == right)
-       	       freelist[right->order] = left->succ;
-
-        left->succ = freelist[left->order];
-        if (freelist[left->order])
-                freelist[left->order]->pred = left;
-        freelist[left->order] = left;
-
+	add_to_freelist(left);
 	merge(left);
 }
 
