@@ -34,7 +34,7 @@ static list_t* split(list_t*, size_t);
 static list_t* freelist[K_MAX + 1];
 static void* start = NULL;
 
-static void print_freelist() 
+static void print_freelist()
 {
 	debug_print("Freelist: [");
 	for (int i = ORDER_0; i <= K_MAX; i++) {
