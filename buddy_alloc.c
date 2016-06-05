@@ -7,7 +7,7 @@
 
 #define DEBUG 0
 #define debug_print(...) \
-	    do { if (DEBUG) fprintf(stderr, ##__VA_ARGS__); } while (0)
+		do { if (DEBUG) fprintf(stderr, ##__VA_ARGS__); } while (0)
 
 #define ALIGNMENT 8
 #define ALIGN(size) (((size) + (ALIGNMENT-1)) & ~(ALIGNMENT-1))
@@ -16,7 +16,7 @@ typedef struct list_t list_t;
 struct list_t {
 	unsigned	in_use: 1; 	/* if the block is used or not */
 	size_t		order; 		/* current order of block (2^order) */
-	list_t*	    	succ;		/* right child block in tree */
+	list_t*		succ;		/* right child block in tree */
 	list_t*		pred;		/* left child block in tree */
 };
 
@@ -94,7 +94,6 @@ void *malloc(size_t requested_size)
 /* Find the smallest power of 2 larger than k */
 static size_t get_order(size_t v)
 {
-
 	int k = ORDER_0;
 	while ((1 << k) < v) {
 		k++;
@@ -102,14 +101,11 @@ static size_t get_order(size_t v)
 	return k;
 }
 
-
 // finds a suitable block of order k. if not found return null
 static list_t* find_block(size_t k)
 {
-
 	if (k > K_MAX)
 		return NULL;
-
 
 	list_t* current = freelist[k];
 
@@ -129,7 +125,8 @@ static list_t* find_block(size_t k)
 	return current;
 }
 
-static void remove_from_freelist(list_t* item) {
+static void remove_from_freelist(list_t* item)
+{
 	size_t k = item->order;
 
 	if (freelist[k] == item)
@@ -143,11 +140,10 @@ static void remove_from_freelist(list_t* item) {
 
 	item->pred = NULL;
 	item->succ = NULL;
-
 }
 
-static void add_to_freelist(list_t* item) {
-
+static void add_to_freelist(list_t* item)
+{
 	size_t k = item->order;
 
 	if (!freelist[k]) {
@@ -165,9 +161,7 @@ static void add_to_freelist(list_t* item) {
 
 static list_t* split(list_t* src, size_t new_order)
 {
-
 	while (src->order > new_order) {
-
 		/* src becomes left buddy */
 		remove_from_freelist(src);
 
@@ -182,7 +176,6 @@ static list_t* split(list_t* src, size_t new_order)
 
 		add_to_freelist(right);
 		add_to_freelist(src);
-
 	}
 
 	return src;
@@ -214,7 +207,8 @@ static void merge(list_t* block)
 }
 
 
-void free(void *ptr) {
+void free(void *ptr)
+{
 	debug_print("***************************Free (%p)\n", ptr);
 	print_freelist();
 
@@ -240,7 +234,8 @@ void *calloc(size_t nbr_elements, size_t element_size) {
 	return ptr;
 }
 
-void *realloc(void *ptr, size_t size) {
+void *realloc(void *ptr, size_t size)
+{
 	debug_print("***************************REALLOC(%p, %zu)\n", ptr, size);
 
 	if (!ptr) {
